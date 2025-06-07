@@ -32,6 +32,12 @@ from .quality import (
     QualityLevel
 )
 
+from .landmarks import (
+    LandmarkDetector,
+    FaceLandmarks,
+    estimate_face_pose
+)
+
 __version__ = "1.0.0"
 __author__ = "Face Swapping Tool"
 
@@ -50,5 +56,10 @@ __all__ = [
     # Quality assessment classes
     'FaceQualityAssessor', 
     'QualityMetrics',
-    'QualityLevel'
+    'QualityLevel',
+    
+    # Landmark detection classes
+    'LandmarkDetector',
+    'FaceLandmarks',
+    'estimate_face_pose'
 ]

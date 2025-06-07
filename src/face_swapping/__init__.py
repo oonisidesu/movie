@@ -25,6 +25,8 @@ from .utils import (
     extract_face_region,
     resize_face_to_target
 )
+from .advanced_swapper import AdvancedFaceSwapper
+from .triangulation import FaceTriangulation, TriangularWarper
 
 __version__ = "1.0.0"
 __all__ = [
@@ -39,5 +41,8 @@ __all__ = [
     "validate_face_images",
     "calculate_face_similarity",
     "extract_face_region",
-    "resize_face_to_target"
+    "resize_face_to_target",
+    "AdvancedFaceSwapper",
+    "FaceTriangulation",
+    "TriangularWarper"
 ]
