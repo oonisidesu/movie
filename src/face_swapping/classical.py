@@ -78,9 +78,10 @@ class ClassicalFaceSwapper:
             source_landmarks = self._extract_landmarks(source_face)
             target_landmarks = self._extract_landmarks(target_face)
             
+            # If landmarks are not available, use simple bbox-based swapping
             if source_landmarks is None or target_landmarks is None:
-                logger.error("Failed to extract landmarks")
-                return None
+                logger.info("Landmarks not available, using simple bbox-based swapping")
+                return self._simple_bbox_swap(source_image, target_image, source_face, target_face)
             
             # Create result image (copy of target)
             result_image = target_image.copy()
@@ -112,6 +113,231 @@ class ClassicalFaceSwapper:
             logger.error(f"Classical face swapping failed: {e}")
             return None
     
+    def _simple_bbox_swap(self, source_image: np.ndarray, target_image: np.ndarray,
+                         source_face: FaceDetection, target_face: FaceDetection) -> Optional[np.ndarray]:
+        """
+        Enhanced face swapping using bounding boxes with color correction and better blending.
+        
+        Args:
+            source_image: Source image
+            target_image: Target image
+            source_face: Source face detection
+            target_face: Target face detection
+            
+        Returns:
+            Image with swapped face or None if failed
+        """
+        try:
+            # Get bounding boxes
+            src_x, src_y, src_w, src_h = source_face.bbox
+            tgt_x, tgt_y, tgt_w, tgt_h = target_face.bbox
+            
+            # Add padding for better blending
+            padding = 0.3
+            src_pad_w = int(src_w * padding)
+            src_pad_h = int(src_h * padding)
+            tgt_pad_w = int(tgt_w * padding)
+            tgt_pad_h = int(tgt_h * padding)
+            
+            # Expand source region with padding
+            src_x_padded = max(0, src_x - src_pad_w)
+            src_y_padded = max(0, src_y - src_pad_h)
+            src_x2_padded = min(source_image.shape[1], src_x + src_w + src_pad_w)
+            src_y2_padded = min(source_image.shape[0], src_y + src_h + src_pad_h)
+            
+            # Expand target region with padding
+            tgt_x_padded = max(0, tgt_x - tgt_pad_w)
+            tgt_y_padded = max(0, tgt_y - tgt_pad_h)
+            tgt_x2_padded = min(target_image.shape[1], tgt_x + tgt_w + tgt_pad_w)
+            tgt_y2_padded = min(target_image.shape[0], tgt_y + tgt_h + tgt_pad_h)
+            
+            # Extract padded regions
+            source_face_region = source_image[src_y_padded:src_y2_padded, src_x_padded:src_x2_padded]
+            target_face_region = target_image[tgt_y_padded:tgt_y2_padded, tgt_x_padded:tgt_x2_padded]
+            
+            if source_face_region.size == 0:
+                logger.error("Source face region is empty")
+                return None
+            
+            # Resize source face to match target face size
+            target_height = tgt_y2_padded - tgt_y_padded
+            target_width = tgt_x2_padded - tgt_x_padded
+            # Use INTER_CUBIC for better quality when upscaling, INTER_AREA for downscaling
+            interpolation = cv2.INTER_CUBIC if (target_width > source_face_region.shape[1] or 
+                                               target_height > source_face_region.shape[0]) else cv2.INTER_AREA
+            resized_source = cv2.resize(source_face_region, (target_width, target_height), 
+                                      interpolation=interpolation)
+            
+            # Color correction - match skin tone
+            resized_source_corrected = self._match_skin_tone(resized_source, target_face_region)
+            
+            # Apply sharpening to improve clarity
+            resized_source_corrected = self._sharpen_image(resized_source_corrected)
+            
+            # Create result image
+            result = target_image.copy()
+            
+            # Create advanced elliptical mask with feathering
+            mask = self._create_advanced_mask(target_height, target_width, tgt_w, tgt_h, padding)
+            
+            # Apply seamless cloning if possible
+            try:
+                # Calculate center for seamless cloning
+                center_x = tgt_x + tgt_w // 2
+                center_y = tgt_y + tgt_h // 2
+                
+                # Use Poisson blending for more natural results
+                blended = cv2.seamlessClone(
+                    resized_source_corrected, 
+                    result, 
+                    mask,
+                    (center_x, center_y), 
+                    cv2.NORMAL_CLONE
+                )
+                result = blended
+            except:
+                # Fallback to alpha blending
+                mask_3d = np.stack([mask] * 3, axis=2) / 255.0
+                
+                # Extract target region for blending
+                target_region = result[tgt_y_padded:tgt_y2_padded, tgt_x_padded:tgt_x2_padded]
+                
+                # Blend with improved alpha blending
+                blended_region = (resized_source_corrected * mask_3d + target_region * (1 - mask_3d)).astype(np.uint8)
+                
+                # Place blended region back
+                result[tgt_y_padded:tgt_y2_padded, tgt_x_padded:tgt_x2_padded] = blended_region
+            
+            logger.info("Enhanced face swap completed")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Enhanced face swapping failed: {e}")
+            return None
+    
+    def _match_skin_tone(self, source_face: np.ndarray, target_face: np.ndarray) -> np.ndarray:
+        """
+        Match the skin tone of source face to target face.
+        
+        Args:
+            source_face: Source face region
+            target_face: Target face region
+            
+        Returns:
+            Color-corrected source face
+        """
+        try:
+            # Convert to LAB color space for better color matching
+            source_lab = cv2.cvtColor(source_face, cv2.COLOR_BGR2LAB)
+            target_lab = cv2.cvtColor(target_face, cv2.COLOR_BGR2LAB)
+            
+            # Split channels
+            source_l, source_a, source_b = cv2.split(source_lab)
+            target_l, target_a, target_b = cv2.split(target_lab)
+            
+            # Calculate statistics for color channels
+            source_mean_a = np.mean(source_a)
+            source_mean_b = np.mean(source_b)
+            source_std_a = np.std(source_a)
+            source_std_b = np.std(source_b)
+            
+            target_mean_a = np.mean(target_a)
+            target_mean_b = np.mean(target_b)
+            target_std_a = np.std(target_a)
+            target_std_b = np.std(target_b)
+            
+            # Transfer color
+            if source_std_a > 0:
+                source_a = (source_a - source_mean_a) * (target_std_a / source_std_a) + target_mean_a
+            if source_std_b > 0:
+                source_b = (source_b - source_mean_b) * (target_std_b / source_std_b) + target_mean_b
+            
+            # Clip values
+            source_a = np.clip(source_a, 0, 255).astype(np.uint8)
+            source_b = np.clip(source_b, 0, 255).astype(np.uint8)
+            
+            # Merge channels
+            corrected_lab = cv2.merge([source_l, source_a, source_b])
+            
+            # Convert back to BGR
+            corrected_bgr = cv2.cvtColor(corrected_lab, cv2.COLOR_LAB2BGR)
+            
+            return corrected_bgr
+            
+        except Exception as e:
+            logger.warning(f"Color matching failed: {e}")
+            return source_face
+    
+    def _create_advanced_mask(self, height: int, width: int, 
+                             face_w: int, face_h: int, padding: float) -> np.ndarray:
+        """
+        Create an advanced mask with smooth feathering.
+        
+        Args:
+            height: Mask height
+            width: Mask width
+            face_w: Face width
+            face_h: Face height
+            padding: Padding ratio
+            
+        Returns:
+            Advanced blending mask
+        """
+        mask = np.zeros((height, width), dtype=np.uint8)
+        
+        # Calculate center and axes
+        center_x = width // 2
+        center_y = height // 2
+        
+        # Calculate face region within padded area
+        face_center_x = int(width * (0.5))
+        face_center_y = int(height * (0.5))
+        
+        # Create multiple ellipses for smooth gradient
+        max_axes_x = int(face_w * 0.5)
+        max_axes_y = int(face_h * 0.6)  # Slightly elongated for face shape
+        
+        # Create gradient mask
+        for i in range(10):
+            factor = 1.0 - (i * 0.1)
+            axes_x = int(max_axes_x * factor)
+            axes_y = int(max_axes_y * factor)
+            value = int(255 * (1.0 - i * 0.1))
+            cv2.ellipse(mask, (face_center_x, face_center_y), 
+                       (axes_x, axes_y), 0, 0, 360, value, -1)
+        
+        # Apply moderate Gaussian blur for smooth feathering without too much blur
+        mask = cv2.GaussianBlur(mask, (21, 21), 0)
+        
+        return mask
+    
+    def _sharpen_image(self, image: np.ndarray) -> np.ndarray:
+        """
+        Apply sharpening to improve image clarity.
+        
+        Args:
+            image: Input image
+            
+        Returns:
+            Sharpened image
+        """
+        try:
+            # Create sharpening kernel
+            kernel = np.array([[-1, -1, -1],
+                             [-1,  9, -1],
+                             [-1, -1, -1]])
+            
+            # Apply the sharpening kernel
+            sharpened = cv2.filter2D(image, -1, kernel)
+            
+            # Blend with original to avoid over-sharpening
+            result = cv2.addWeighted(image, 0.7, sharpened, 0.3, 0)
+            
+            return result
+        except Exception as e:
+            logger.warning(f"Sharpening failed: {e}")
+            return image
+    
     def _extract_landmarks(self, face_detection: FaceDetection) -> Optional[np.ndarray]:
         """
         Extract facial landmarks from face detection.
@@ -122,11 +348,11 @@ class ClassicalFaceSwapper:
         Returns:
             Array of landmark points or None if not available
         """
-        if 'landmarks' not in face_detection or face_detection['landmarks'] is None:
+        if face_detection.landmarks is None:
             logger.warning("No landmarks available in face detection")
             return None
         
-        landmarks = face_detection['landmarks']
+        landmarks = face_detection.landmarks
         
         # Convert to numpy array if needed
         if isinstance(landmarks, list):

@@ -80,8 +80,8 @@ def calculate_face_similarity(source_face: FaceDetection, target_face: FaceDetec
     """
     try:
         # Extract landmarks
-        source_landmarks = source_face.get('landmarks')
-        target_landmarks = target_face.get('landmarks')
+        source_landmarks = source_face.landmarks
+        target_landmarks = target_face.landmarks
         
         if source_landmarks is None or target_landmarks is None:
             logger.warning("No landmarks available for similarity calculation")
@@ -274,7 +274,7 @@ def extract_face_region(image: np.ndarray, face_detection: FaceDetection,
         Extracted face region or None if extraction failed
     """
     try:
-        bbox = face_detection.get('bbox')
+        bbox = face_detection.bbox
         if bbox is None:
             logger.error("No bounding box in face detection")
             return None

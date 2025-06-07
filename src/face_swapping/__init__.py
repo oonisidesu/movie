@@ -15,7 +15,7 @@ Author: Face Swapping Tool
 License: Personal/Educational Use Only
 """
 
-from .swapper import FaceSwapper, SwapMethod
+from .swapper import FaceSwapper, SwapMethod, SwapConfig
 from .classical import ClassicalFaceSwapper
 from .alignment import FaceAligner, AlignmentMethod
 from .blending import FaceBlender, BlendingMethod
@@ -30,6 +30,7 @@ __version__ = "1.0.0"
 __all__ = [
     "FaceSwapper",
     "SwapMethod",
+    "SwapConfig",
     "ClassicalFaceSwapper", 
     "FaceAligner",
     "AlignmentMethod",
