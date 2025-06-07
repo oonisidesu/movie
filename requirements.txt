@@ -34,8 +34,21 @@ logging
 # Performance optimization (optional)
 # numba>=0.57.0  # For JIT compilation of numerical functions
 
-# Progress bars for batch processing (optional)
-# tqdm>=4.64.0
+# CLI Interface Dependencies
+# ===========================
+# Dependencies for command-line interface
+
+# Configuration file support
+PyYAML>=6.0
+
+# Colored console output for better user experience
+colorlog>=6.7.0
+
+# Progress bars for long-running operations
+tqdm>=4.64.0
+
+# System information utilities
+psutil>=5.9.0
 
 # Note: Some dependencies like 'logging' are part of Python standard library
 # Note: For GPU acceleration, ensure CUDA-compatible PyTorch installation
