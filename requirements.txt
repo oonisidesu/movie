@@ -1,6 +1,42 @@
-opencv-python==4.8.1.78
-opencv-contrib-python==4.8.1.78
-numpy==1.24.3
-ffmpeg-python==0.2.0
-tqdm==4.66.1
-Pillow==10.1.0
+# Face Detection Module Dependencies
+# ===================================
+# Core dependencies for the face detection module of the video face-swapping tool
+
+# Computer Vision and Image Processing
+opencv-python>=4.8.0
+opencv-contrib-python>=4.8.0
+
+# Numerical Computing
+numpy>=1.21.0
+
+# Google MediaPipe for advanced face detection and pose estimation
+# Optional but recommended for better accuracy
+mediapipe>=0.10.0
+
+# Deep Learning Frameworks (choose one or both based on needs)
+# PyTorch - preferred for face swapping models
+torch>=2.0.0
+torchvision>=0.15.0
+
+# TensorFlow - alternative/additional option
+# tensorflow>=2.13.0
+
+# Logging and Utilities
+logging
+
+# Optional: For better performance with large images
+# Pillow>=9.0.0
+
+# Development and Testing Dependencies (optional)
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+
+# Performance optimization (optional)
+# numba>=0.57.0  # For JIT compilation of numerical functions
+
+# Progress bars for batch processing (optional)
+# tqdm>=4.64.0
+
+# Note: Some dependencies like 'logging' are part of Python standard library
+# Note: For GPU acceleration, ensure CUDA-compatible PyTorch installation
+# Note: MediaPipe provides the most accurate face detection but requires additional setup
