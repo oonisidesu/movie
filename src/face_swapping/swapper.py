@@ -121,7 +121,7 @@ class FaceSwapper:
             from ..face_detection import DetectionBackend
             self.face_detector = FaceDetector(
                 backend=DetectionBackend.OPENCV_HAAR,
-                confidence_threshold=0.5
+                min_detection_confidence=0.5
             )
             
             # Initialize face aligner

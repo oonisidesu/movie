@@ -15,11 +15,11 @@ import argparse
 from pathlib import Path
 
 # Add src to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from face_detection import FaceDetector, DetectionBackend
-from face_swapping import FaceSwapper, SwapMethod, SwapConfig
-from utils.logging_config import setup_logging
+from src.face_detection import FaceDetector, DetectionBackend
+from src.face_swapping import FaceSwapper, SwapMethod, SwapConfig
+from src.utils.logging_config import setup_logging
 
 # Setup logging
 setup_logging(level=logging.INFO)
@@ -68,7 +68,7 @@ def main():
         logger.info("Initializing face detector...")
         face_detector = FaceDetector(
             backend=DetectionBackend.OPENCV_HAAR,
-            confidence_threshold=0.5
+            min_detection_confidence=0.5
         )
         
         # Detect faces
