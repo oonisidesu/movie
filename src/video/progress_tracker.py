@@ -419,7 +419,7 @@ class ProgressManager:
         
         return final_stats
     
-    def get_active_operations(self) -> list[str]:
+    def get_active_operations(self) -> List[str]:
         """Get list of active operation IDs."""
         return list(self.active_trackers.keys())
     
