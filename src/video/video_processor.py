@@ -156,7 +156,8 @@ class VideoProcessor:
                 logger.info(f"Audio extracted: {self.audio_path}")
                 return self.audio_path
             else:
-                logger.warning("No audio track found or extraction failed")
+                logger.info("Audio extraction failed or no audio track found")
+                logger.info("Video processing will continue without audio")
                 self.audio_path = None
                 return None
         except Exception as e:

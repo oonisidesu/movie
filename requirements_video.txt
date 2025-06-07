@@ -1,0 +1,33 @@
+# Video Processing Module Dependencies
+# ====================================
+# Core dependencies for the video processing module
+
+# Computer Vision and Video Processing
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# Optional: FFmpeg Python wrapper for advanced audio/video operations
+# Note: Requires FFmpeg system installation
+# macOS: brew install ffmpeg
+# Ubuntu: sudo apt install ffmpeg  
+# Windows: Download from https://ffmpeg.org/download.html
+ffmpeg-python>=0.2.0
+
+# Progress tracking and UI
+tqdm>=4.64.0
+
+# Image processing
+Pillow>=10.0.0
+
+# Testing dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Development dependencies
+black>=23.0.0
+flake8>=5.0.0
+mypy>=1.0.0
+
+# Note: FFmpeg is optional but highly recommended for audio processing
+# Video processing will work without FFmpeg but audio tracks will be lost
+# Install FFmpeg separately using your system's package manager

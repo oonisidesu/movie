@@ -7,7 +7,7 @@ with support for different output formats and real-time updates.
 
 import time
 import logging
-from typing import Callable, Optional, Dict, Any
+from typing import Callable, Optional, Dict, Any, List
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
@@ -263,7 +263,7 @@ class SilentProgressTracker(ProgressTracker):
 class MultiProgressTracker(ProgressTracker):
     """Progress tracker that manages multiple sub-trackers."""
     
-    def __init__(self, trackers: list[ProgressTracker]):
+    def __init__(self, trackers: List[ProgressTracker]):
         """
         Initialize multi-progress tracker.
         

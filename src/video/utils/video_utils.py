@@ -162,7 +162,11 @@ def extract_audio(video_path: str, audio_output_path: str,
     try:
         # Check if ffmpeg is available
         if not _check_ffmpeg():
-            logger.error("ffmpeg not found. Cannot extract audio.")
+            logger.warning("ffmpeg not found. Audio extraction will be skipped.")
+            logger.info("To enable audio processing, install ffmpeg:")
+            logger.info("  macOS: brew install ffmpeg")
+            logger.info("  Ubuntu: sudo apt install ffmpeg")
+            logger.info("  Windows: Download from https://ffmpeg.org/download.html")
             return False
         
         # Build ffmpeg command
@@ -210,7 +214,8 @@ def merge_audio(video_path: str, audio_path: str, output_path: str) -> bool:
     try:
         # Check if ffmpeg is available
         if not _check_ffmpeg():
-            logger.error("ffmpeg not found. Cannot merge audio.")
+            logger.warning("ffmpeg not found. Audio merging will be skipped.")
+            logger.info("Video will be saved without audio track.")
             return False
         
         # Build ffmpeg command
